@@ -28,8 +28,14 @@ exports.handler = async (event) => {
       })
     });
 
-    const data = await res.json();
-    const text = data.choices[0].message.content;
+    const raw = await res.json();
+    console.log('OpenAI raw:', JSON.stringify(raw));
+
+    if (raw.error) {
+      return { statusCode: 500, body: JSON.stringify({ error: raw.error.message }) };
+    }
+
+    const text = raw.choices[0].message.content;
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const card = JSON.parse(jsonMatch[0]);
 
