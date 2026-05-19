@@ -480,7 +480,7 @@
     resetCard('<div class="loading-dots"><span></span><span></span><span></span></div>', '');
 
     try {
-      const res = await fetch('/.netlify/functions/generate', {
+      const res = await fetch('/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic })
