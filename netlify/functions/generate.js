@@ -3,53 +3,42 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const HF_TOKEN = process.env.HF_TOKEN;
-  if (!HF_TOKEN) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'HF_TOKEN not configured' }) };
+  const OPENAI_KEY = process.env.OPENAI_KEY;
+  if (!OPENAI_KEY) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_KEY not configured' }) };
   }
 
   const { topic } = JSON.parse(event.body);
 
   try {
-    const res = await fetch('https://api-inference.huggingface.co/models/google/gemma-2-2b-it/v1/chat/completions', {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${HF_TOKEN}`
+        'Authorization': `Bearer ${OPENAI_KEY}`
       },
       body: JSON.stringify({
-        model: 'google/gemma-2-2b-it',
+        model: 'gpt-4o-mini',
         messages: [
-          { role: 'user', content: `Generate a flashcard about ${topic}. Respond with ONLY this JSON format, nothing else: {"question":"your question here","answer":"your answer here"}` }
+          { role: 'system', content: 'You are a flashcard generator. Always respond with ONLY a valid JSON object with "question" and "answer" fields. No markdown, no backticks, no explanation.' },
+          { role: 'user', content: `Generate one flashcard about ${topic}. JSON only: {"question":"...","answer":"..."}` }
         ],
-        max_tokens: 200,
-        temperature: 0.7
+        max_tokens: 300,
+        temperature: 0.9
       })
     });
 
     const data = await res.json();
-    console.log('Response:', JSON.stringify(data));
-
-    if (!data.choices || !data.choices[0]) {
-      console.log('Bad response:', JSON.stringify(data));
-      return { statusCode: 500, body: JSON.stringify({ error: 'Model error', detail: data }) };
-    }
-
     const text = data.choices[0].message.content;
-    console.log('Text:', text);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'No JSON found', text }) };
-    }
-
     const card = JSON.parse(jsonMatch[0]);
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(card)
     };
   } catch (e) {
-    console.log('Catch error:', e.message);
     return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
   }
 };
