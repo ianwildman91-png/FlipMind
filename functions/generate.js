@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
       'Authorization': `Bearer ${GROQ_KEY}`
     },
     body: JSON.stringify({
-      model: 'llama3-8b-8192',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: 'You are a flashcard generator. Always respond with ONLY a valid JSON object with "question" and "answer" fields. No markdown, no backticks, no explanation.' },
         { role: 'user', content: `Generate one flashcard about ${topic}. JSON only: {"question":"...","answer":"..."}` }
